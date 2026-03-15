@@ -3,9 +3,9 @@ Generic email sending module using configurable providers
 """
 
 import os
-from email_composer import build_html_email, get_email_subject
+from .email_composer import build_html_email, get_email_subject
 from config import EMAIL_PROVIDER, EMAIL_CONFIG, DIRECTOR_CONFIG
-from email_providers import get_email_provider
+from .email_providers import get_email_provider
 
 
 def send_email_with_attachments(html_body, screenshot_paths=None, dry_run=False):
@@ -41,7 +41,7 @@ def preview_email_html(all_data, screenshot_paths=None):
 
 if __name__ == "__main__":
     # Test email functionality
-    from fetcher import fetch_all_environment_data
+    from data.fetcher import fetch_all_environment_data
     
     print("Fetching data...")
     all_data = fetch_all_environment_data()

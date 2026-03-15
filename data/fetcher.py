@@ -8,6 +8,7 @@ from requests_ntlm import HttpNtlmAuth
 import json
 from datetime import datetime
 from config import API_ENDPOINT, USE_WINDOWS_AUTH, BASIC_AUTH_USER, BASIC_AUTH_PASS, DIRECTOR_CONFIG, ENVIRONMENTS
+from config.constants import DEFAULT_API_TIMEOUT
 
 
 def get_auth_session():
@@ -36,7 +37,7 @@ def fetch_api_data():
     session = get_auth_session()
     
     try:
-        response = session.get(API_ENDPOINT, timeout=30)
+        response = session.get(API_ENDPOINT, timeout=DEFAULT_API_TIMEOUT)
         response.raise_for_status()
         return response.json()
     except requests.exceptions.RequestException as e:

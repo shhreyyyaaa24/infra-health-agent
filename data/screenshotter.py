@@ -5,6 +5,7 @@ Screenshot module using Playwright for dashboard captures
 import os
 from playwright.sync_api import sync_playwright
 from config import DASHBOARD_TAB_URLS, SCREENSHOT_DIR, SCREENSHOT_SELECTOR, SCREENSHOT_HEADLESS
+from config.constants import DEFAULT_LOGIN_WAIT_TIME, AUTH_STATE_FILE
 
 
 def ensure_screenshot_dir():
@@ -33,14 +34,14 @@ def take_screenshots(login_mode=False):
             page.goto(first_url)
             
             # Wait for user to complete login
-            page.wait_for_timeout(30000)  # 30 seconds for login
+            page.wait_for_timeout(DEFAULT_LOGIN_WAIT_TIME * 1000)  # Convert to milliseconds
             
             # Save auth state for future use
-            context.storage_state(path=f"{SCREENSHOT_DIR}/auth_state.json")
+            context.storage_state(path=f"{SCREENSHOT_DIR}/{AUTH_STATE_FILE}")
             
         else:
             # Normal mode: use saved auth state if available
-            auth_state_path = f"{SCREENSHOT_DIR}/auth_state.json"
+            auth_state_path = f"{SCREENSHOT_DIR}/{AUTH_STATE_FILE}"
             
             if os.path.exists(auth_state_path):
                 context = browser.new_context(storage_state=auth_state_path)

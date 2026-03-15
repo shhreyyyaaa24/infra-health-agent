@@ -52,6 +52,20 @@ Build email and preview without sending:
 python main.py --dry-run
 ```
 
+### AI Agent Mode
+
+Run the intelligent AI Agent for advanced monitoring and decision-making:
+```bash
+python main.py --ai-agent
+```
+
+### Dry Run AI Agent
+
+Preview AI Agent actions without sending emails:
+```bash
+python main.py --ai-agent --dry-run
+```
+
 ### Scheduled Mode
 
 Run every Friday at the configured time:
@@ -59,18 +73,59 @@ Run every Friday at the configured time:
 python main.py --schedule
 ```
 
+## AI Agent Capabilities
+
+The AI Agent transforms the rule-based automation into an intelligent system with:
+
+### 🧠 Intelligence Features
+- **Anomaly Detection**: Identifies unusual patterns in infrastructure metrics
+- **Trend Analysis**: Analyzes performance trends over time
+- **Predictive Insights**: Forecasts potential issues before they occur
+- **Pattern Recognition**: Learns from historical data to identify recurring issues
+- **Adaptive Decision Making**: Makes intelligent decisions based on context
+
+### 🤖 Decision Engine
+- **Severity Assessment**: Intelligently assesses alert severity
+- **Reporting Strategy**: Determines optimal reporting frequency and format
+- **Immediate Actions**: Recommends critical actions for urgent issues
+- **Escalation Logic**: Decides when to escalate to management
+
+### 📊 Enhanced Analysis
+- **Multi-factor Analysis**: Considers CPU, budget, and performance metrics
+- **Risk Assessment**: Evaluates overall infrastructure risk
+- **Cost Impact Analysis**: Estimates financial impact of issues
+- **Customer Impact Assessment**: Determines customer-facing impact
+
+### 🎯 Learning System
+- **Historical Learning**: Learns from past incidents and outcomes
+- **Pattern Storage**: Maintains knowledge base of infrastructure patterns
+- **Confidence Scoring**: Provides confidence levels for predictions
+- **Continuous Improvement**: Improves accuracy over time
+
+### 📧 AI-Enhanced Reporting
+- **Intelligent Insights**: Includes AI-generated insights in reports
+- **Anomaly Highlights**: Highlights detected anomalies
+- **Predictive Warnings**: Includes early warnings for potential issues
+- **Smart Recommendations**: Provides actionable recommendations
+
 ## Configuration
 
-Edit `config.py` to customize:
+The system uses a two-tier configuration approach organized in the `config/` package:
 
+### 1. System Constants (`config/constants.py`)
+- Contains system defaults that should not be modified
+- Includes status colors, default environments, timeouts, etc.
+
+### 2. User Configuration (`config/user_config.py`)
 - **Email Provider**: `EMAIL_PROVIDER` - Choose "outlook" or "gmail"
 - **Director Config**: `DIRECTOR_CONFIG` - Set director name, email, and CC emails
-- **API Settings**: `API_ENDPOINT`, `USE_WINDOWS_AUTH`, authentication credentials
-- **Environments**: `ENVIRONMENTS` dict with display names and API keys
-- **Screenshots**: `DASHBOARD_TAB_URLS`, `SCREENSHOT_DIR`, selectors
+- **API Settings**: `API_ENDPOINT`, authentication credentials
+- **Dashboard URLs**: `DASHBOARD_TAB_URLS` for your dashboards
 - **Email Settings**: `EMAIL_CONFIG` dict with provider-specific settings
 - **Scheduling**: `SEND_TIME` (24-hour format, e.g., "09:00")
-- **Status Colors**: Customizable colors for HEALTHY/MEDIUM/SEVERE statuses
+- **Custom Environments**: Optional `CUSTOM_ENVIRONMENTS` to override defaults
+
+Edit `config/user_config.py` to customize all settings for your environment.
 
 ## Status Logic
 
@@ -82,15 +137,31 @@ Edit `config.py` to customize:
 
 ```
 infra-health-agent/
-├── main.py              # CLI entry point
-├── config.py            # All configuration settings
-├── fetcher.py           # API data fetching and processing
-├── screenshotter.py     # Playwright screenshot capture
-├── email_composer.py    # HTML email generation
-├── mailer.py            # Generic email sending interface
-├── email_providers.py   # Email provider implementations (Outlook/Gmail)
-├── requirements.txt     # Python dependencies
-└── README.md           # This file
+├── main.py                    # CLI entry point
+├── requirements.txt           # Python dependencies
+├── README.md                 # This file
+├── config/                   # Configuration package
+│   ├── __init__.py          # Package initialization
+│   ├── constants.py         # System constants (do not modify)
+│   ├── user_config.py       # User configuration template (modify this)
+│   └── config.py            # Configuration loader
+├── data/                     # Data handling package
+│   ├── __init__.py          # Package initialization
+│   ├── fetcher.py           # API data fetching and processing
+│   └── screenshotter.py     # Playwright screenshot capture
+├── email/                    # Email package
+│   ├── __init__.py          # Package initialization
+│   ├── email_composer.py    # HTML email generation
+│   ├── email_providers.py   # Email provider implementations (Outlook/Gmail)
+│   └── mailer.py            # Generic email sending interface
+├── ai_agent/                 # 🤖 AI Agent package
+│   ├── __init__.py          # Package initialization
+│   ├── core_agent.py        # Main AI Agent class
+│   ├── decision_engine.py   # Intelligent decision-making engine
+│   ├── analyzer.py          # Data analysis and anomaly detection
+│   └── learning.py          # Learning system for pattern recognition
+└── utils/                    # Utilities package
+    └── __init__.py          # Package initialization (for future utilities)
 ```
 
 ## Authentication
@@ -144,14 +215,26 @@ When using `--schedule` flag:
 
 ## Adapting to Your Use Case
 
-1. **Email Provider**: Set `EMAIL_PROVIDER` to "outlook" or "gmail" in `config.py`
-2. **Director Configuration**: Update `DIRECTOR_CONFIG` with name, email, and CC emails
-3. **API Settings**: Modify `API_ENDPOINT` and JSON field names to match your data source
-4. **Authentication**: 
-   - For API: Set `USE_WINDOWS_AUTH = False` and add basic auth credentials if needed
+1. **Open `config/user_config.py`** - This is the only file you need to modify
+2. **Email Provider**: Set `EMAIL_PROVIDER` to "outlook" or "gmail"
+3. **Director Configuration**: Update `DIRECTOR_CONFIG` with name, email, and CC emails
+4. **API Settings**: Modify `API_ENDPOINT` and authentication credentials
+5. **Dashboard URLs**: Customize `DASHBOARD_TAB_URLS` for your dashboards
+6. **Email Configuration**: 
    - For Gmail: Configure sender email and app password in `EMAIL_CONFIG['gmail']`
-5. **Environments**: Adjust `ENVIRONMENTS` dict for your cloud providers
-6. **Dashboard URLs**: Customize `DASHBOARD_TAB_URLS` for your dashboards
+   - For Outlook: Update recipient lists in `EMAIL_CONFIG['outlook']`
+7. **Custom Environments**: Add custom environments in `CUSTOM_ENVIRONMENTS` if needed
+8. **Scheduling**: Adjust `SEND_TIME` for your preferred schedule
+
+**Note**: Do not modify `config/constants.py` - it contains system defaults.
+
+## Package Structure Benefits
+
+- **Modular Design**: Each package has a specific responsibility
+- **Easy Maintenance**: Related functionality grouped together
+- **Scalable**: Easy to add new modules to appropriate packages
+- **Clean Imports**: Explicit imports make dependencies clear
+- **Testable**: Individual packages can be tested in isolation
 
 ## Dependencies
 
@@ -161,3 +244,11 @@ When using `--schedule` flag:
 - `playwright` - Browser automation for screenshots
 - `pywin32` - Windows COM interface for Outlook
 - `apscheduler` - Task scheduling (optional)
+- `numpy` - Numerical computing for AI analysis
+- `scipy` - Scientific computing for pattern recognition
+
+### AI Agent Requirements
+The AI Agent requires additional dependencies for intelligent analysis:
+```bash
+pip install numpy scipy
+```

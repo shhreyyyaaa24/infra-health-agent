@@ -5,7 +5,8 @@ Email composition module for building HTML emails with inline images
 import os
 import base64
 from datetime import datetime
-from config import STATUS_COLORS, STATUS_LABELS, EMAIL_CONFIG
+from config import EMAIL_CONFIG
+from config.constants import STATUS_COLORS, STATUS_LABELS
 
 
 def generate_cid_for_image(image_path):

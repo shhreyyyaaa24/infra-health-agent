@@ -8,11 +8,63 @@ import os
 from datetime import datetime
 
 # Import our modules
-from fetcher import fetch_all_environment_data, get_summary_stats
-from screenshotter import take_screenshots, login_and_save_state
-from email_composer import build_html_email
-from mailer import send_email_with_attachments, preview_email_html
+from data.fetcher import fetch_all_environment_data, get_summary_stats
+from data.screenshotter import take_screenshots, login_and_save_state
+from email.email_composer import build_html_email
+from email.mailer import send_email_with_attachments, preview_email_html
 from config import SEND_TIME
+from config.constants import DEFAULT_SCHEDULE_DAY
+
+# Import AI Agent
+try:
+    from ai_agent import InfrastructureHealthAgent
+    AI_AGENT_AVAILABLE = True
+except ImportError:
+    AI_AGENT_AVAILABLE = False
+
+
+def run_ai_agent(dry_run=False):
+    """Run the AI Agent for intelligent infrastructure monitoring"""
+    if not AI_AGENT_AVAILABLE:
+        print("❌ AI Agent not available. Please install required dependencies.")
+        return False
+    
+    print("🤖 Starting AI Agent for intelligent infrastructure monitoring...")
+    
+    # Initialize AI Agent
+    agent = InfrastructureHealthAgent(learning_enabled=True)
+    
+    # Run intelligent monitoring cycle
+    cycle_summary = agent.run_intelligent_cycle()
+    
+    # Display results
+    print(f"\n📊 AI Agent Cycle Summary:")
+    print(f"   Duration: {cycle_summary['duration_seconds']:.2f} seconds")
+    print(f"   Decisions Made: {cycle_summary['decisions_made']}")
+    print(f"   Actions Executed: {cycle_summary['actions_executed']}")
+    
+    # Show AI insights
+    if cycle_summary['ai_insights']:
+        insights = cycle_summary['ai_insights']
+        print(f"\n🧠 AI Insights:")
+        print(f"   Anomalies Detected: {len(insights.get('anomalies', []))}")
+        print(f"   Trends Identified: {len(insights.get('trends', []))}")
+        print(f"   Critical Issues: {len(insights.get('critical_issues', []))}")
+        print(f"   Recommendations: {len(insights.get('recommendations', []))}")
+        
+        if insights.get('predictions'):
+            print(f"   Predictions: {len(insights['predictions'])}")
+            for pred in insights['predictions'][:3]:  # Show top 3
+                print(f"     • {pred['description']} (Confidence: {pred['confidence']}%)")
+    
+    # Show agent status
+    agent_status = agent.get_agent_status()
+    print(f"\n📈 AI Agent Status:")
+    print(f"   Capabilities: {', '.join(agent_status['capabilities'])}")
+    print(f"   Decisions in History: {agent_status['decisions_history_count']}")
+    print(f"   Learning Enabled: {agent_status['learning_enabled']}")
+    
+    return True
 
 
 def run_once(dry_run=False):
@@ -86,7 +138,7 @@ def run_scheduler():
     # Schedule job for every Friday at specified time
     scheduler.add_job(
         run_once,
-        trigger=CronTrigger(day_of_week='fri', hour=hour, minute=minute),
+        trigger=CronTrigger(day_of_week=DEFAULT_SCHEDULE_DAY, hour=hour, minute=minute),
         id='weekly_health_check',
         name='Weekly Infrastructure Health Check'
     )
@@ -124,10 +176,28 @@ def main():
         help='Run in scheduler mode (executes every Friday at SEND_TIME)'
     )
     
+    parser.add_argument(
+        '--ai-agent',
+        action='store_true',
+        help='Run AI Agent for intelligent monitoring and decision-making'
+    )
+    
     args = parser.parse_args()
     
     print("Infrastructure Health Agent")
     print("=" * 40)
+    
+    # Handle AI Agent mode
+    if args.ai_agent:
+        if not AI_AGENT_AVAILABLE:
+            print("❌ AI Agent not available. Please install required dependencies:")
+            print("   pip install numpy")
+            return
+        
+        success = run_ai_agent(dry_run=args.dry_run)
+        if not success:
+            sys.exit(1)
+        return
     
     # Handle login mode
     if args.login:

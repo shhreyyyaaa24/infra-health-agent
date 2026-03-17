@@ -171,7 +171,13 @@ class GmailProvider(EmailProvider):
             
             # Create message
             msg = MIMEMultipart('mixed')  # Use 'mixed' for attachments
-            msg['Subject'] = self.config['subject_template']
+            
+            # Format subject with actual date
+            from datetime import datetime
+            date_str = datetime.now().strftime("%Y-%m-%d")
+            subject = self.config['subject_template'].replace("{date}", date_str)
+            msg['Subject'] = subject
+            
             msg['From'] = self.config['sender_email']
             msg['To'] = ", ".join(self.config['to_emails'])
             

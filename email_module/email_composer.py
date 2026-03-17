@@ -3,23 +3,9 @@ Email composition module for building HTML emails with inline images
 """
 
 import os
-import base64
 from datetime import datetime
 from config import EMAIL_CONFIG
 from config.constants import STATUS_COLORS, STATUS_LABELS
-
-
-def generate_cid_for_image(image_path):
-    """Generate a content ID for an image file"""
-    filename = os.path.basename(image_path)
-    name_without_ext = os.path.splitext(filename)[0]
-    return f"{name_without_ext}@infrahealth.local"
-
-
-def embed_image_as_base64(image_path):
-    """Convert image file to base64 for embedding"""
-    with open(image_path, "rb") as image_file:
-        return base64.b64encode(image_file.read()).decode('utf-8')
 
 
 def build_project_details_list(all_data):
@@ -78,125 +64,6 @@ def build_project_details_list(all_data):
     """
     
     return html
-
-
-def build_status_summary(all_data):
-    """Build a status summary section"""
-    total_projects = sum(len(projects) for projects in all_data.values())
-    status_counts = {"HEALTHY": 0, "MEDIUM": 0, "SEVERE": 0}
-    
-    for projects in all_data.values():
-        for project in projects:
-            status_counts[project['status']] += 1
-    
-    html = f"""
-    <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
-        <h3>Summary</h3>
-        <p><strong>Total Projects:</strong> {total_projects}</p>
-        <ul>
-            <li><span style="color: {STATUS_COLORS['HEALTHY']};">●</span> <strong>Healthy:</strong> {status_counts['HEALTHY']} projects</li>
-            <li><span style="color: {STATUS_COLORS['MEDIUM']};">●</span> <strong>Medium Risk:</strong> {status_counts['MEDIUM']} projects</li>
-            <li><span style="color: {STATUS_COLORS['SEVERE']};">●</span> <strong>Severe Risk:</strong> {status_counts['SEVERE']} projects</li>
-        </ul>
-    </div>
-    """
-    
-    return html
-
-
-def build_screenshots_section(screenshot_paths):
-    """Build HTML section with embedded screenshots as base64"""
-    import base64
-    
-    html = '<h3>📸 Dashboard Screenshots</h3>\n'
-    
-    for screenshot_path in screenshot_paths:
-        if os.path.exists(screenshot_path):
-            env_name = os.path.basename(screenshot_path).replace('_dashboard.png', '').upper()
-            
-            # Convert image to base64
-            with open(screenshot_path, "rb") as image_file:
-                image_data = base64.b64encode(image_file.read()).decode('utf-8')
-            
-            html += f"""
-            <div style="margin-bottom: 20px; border: 1px solid #ddd; border-radius: 4px; padding: 10px;">
-                <h4>{env_name} Dashboard</h4>
-                <img src="data:image/png;base64,{image_data}" alt="{env_name} Dashboard" style="max-width: 100%; height: auto; border: 1px solid #ddd; border-radius: 4px;">
-            </div>
-            """
-        else:
-            env_name = os.path.basename(screenshot_path).replace('_dashboard.png', '').upper()
-            html += f"""
-            <div style="margin-bottom: 20px; background-color: #fff3cd; padding: 15px; border-radius: 4px;">
-                <h4>{env_name} Dashboard</h4>
-                <p>❌ Screenshot not available: {screenshot_path}</p>
-            </div>
-            """
-    
-    return html
-
-
-def build_text_email(all_data):
-    """Build plain text version of the email"""
-    from config import DIRECTOR_CONFIG
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    director_name = DIRECTOR_CONFIG.get('name', 'Team Lead')
-    
-    # Calculate summary statistics
-    total_projects = sum(len(projects) for projects in all_data.values())
-    healthy_projects = sum(len([p for p in projects if p['status'] == 'HEALTHY']) for projects in all_data.values())
-    severe_projects = sum(len([p for p in projects if p['status'] == 'SEVERE']) for projects in all_data.values())
-    medium_projects = total_projects - healthy_projects - severe_projects
-    
-    # Build important updates
-    important_updates = []
-    for env_name, projects in all_data.items():
-        for project in projects:
-            if project['status'] == 'SEVERE':
-                important_updates.append(f"⚠️ {project['name']} ({env_name.upper()}): CPU at {project['cpu']}% - Overbudget projection ${project['overbudgetProjection']}")
-    
-    text = f"""Hi {director_name},
-
-Status
-Here's the current infrastructure status as of {timestamp}:
-
-"""
-    
-    if important_updates:
-        text += "Important Updates\n"
-        for update in important_updates:
-            text += f"• {update}\n"
-        text += "\n"
-    
-    text += f"""Summary
-Total Projects: {total_projects}
-
-• Healthy: {healthy_projects} projects
-• Medium Risk: {medium_projects} projects
-• Severe Risk: {severe_projects} projects
-
-Project Details
-"""
-    
-    # Build text list by environment
-    for env_name, projects in all_data.items():
-        text += f"\n{env_name.upper()}\n"
-        text += "-" * (len(env_name) + 1) + "\n"
-        
-        for project in projects:
-            status_display = project['status'].title()
-            overbudget_display = f"${project['overbudgetProjection']}" if project['overbudgetProjection'] > 0 else "$0"
-            
-            text += f"• {project['name']}\n"
-            text += f"  CPU Usage: {project['cpu']}% | CPU Budget: {project['cpusBudget']}% | Shutdown Limit: {project['cpusShutdownLimit']}% | Overbudget Projection: {overbudget_display}\n"
-            text += f"  Status: {status_display}\n\n"
-    
-    text += """
----
-This report was generated automatically by the Infrastructure Health Agent.
-    """
-    
-    return text.strip()
 
 
 def build_html_email(all_data, screenshot_paths=None):

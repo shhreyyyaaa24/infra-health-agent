@@ -8,15 +8,15 @@ from config import EMAIL_PROVIDER, EMAIL_CONFIG, DIRECTOR_CONFIG
 from .email_providers import get_email_provider
 
 
-def send_email_with_attachments(html_body, screenshot_paths=None, dry_run=False):
+def send_email_with_attachments(html_body, screenshot_paths=None, dry_run=False, all_data=None):
     """Send email using configured provider with inline image attachments"""
     try:
         # Get email provider based on configuration
         provider_config = EMAIL_CONFIG[EMAIL_PROVIDER]
         email_provider = get_email_provider(EMAIL_PROVIDER, provider_config)
         
-        # Send email using the provider
-        return email_provider.send_email(html_body, screenshot_paths, dry_run)
+        # Send email using the provider (pass all_data for text version)
+        return email_provider.send_email(html_body, screenshot_paths, dry_run, all_data)
         
     except Exception as e:
         print(f"Failed to send email: {e}")

@@ -3,19 +3,29 @@ Data fetcher module for API calls and data processing
 """
 
 import requests
-from requests_negotiate_sspi import HttpNegotiateAuth
-from requests_ntlm import HttpNtlmAuth
 import json
+import platform
 from datetime import datetime
 from config import API_ENDPOINT, USE_WINDOWS_AUTH, BASIC_AUTH_USER, BASIC_AUTH_PASS, DIRECTOR_CONFIG, ENVIRONMENTS
 from config.constants import DEFAULT_API_TIMEOUT
+
+# Only import Windows auth modules on Windows
+if platform.system().lower() == 'windows':
+    try:
+        from requests_negotiate_sspi import HttpNegotiateAuth
+        from requests_ntlm import HttpNtlmAuth
+        WINDOWS_AUTH_AVAILABLE = True
+    except ImportError:
+        WINDOWS_AUTH_AVAILABLE = False
+else:
+    WINDOWS_AUTH_AVAILABLE = False
 
 
 def get_auth_session():
     """Create an authenticated requests session"""
     session = requests.Session()
     
-    if USE_WINDOWS_AUTH:
+    if USE_WINDOWS_AUTH and WINDOWS_AUTH_AVAILABLE:
         try:
             # Try Windows authentication first
             session.auth = HttpNegotiateAuth()
@@ -27,7 +37,16 @@ def get_auth_session():
             else:
                 raise Exception("No valid authentication method available")
     elif BASIC_AUTH_USER and BASIC_AUTH_PASS:
-        session.auth = HttpNtlmAuth(BASIC_AUTH_USER, BASIC_AUTH_PASS)
+        if WINDOWS_AUTH_AVAILABLE:
+            session.auth = HttpNtlmAuth(BASIC_AUTH_USER, BASIC_AUTH_PASS)
+        else:
+            # Use basic auth on non-Windows platforms
+            session.auth = (BASIC_AUTH_USER, BASIC_AUTH_PASS)
+    elif USE_WINDOWS_AUTH and not WINDOWS_AUTH_AVAILABLE:
+        print("Warning: Windows auth requested but not available on this platform")
+        print("Falling back to basic auth if credentials provided")
+        if BASIC_AUTH_USER and BASIC_AUTH_PASS:
+            session.auth = (BASIC_AUTH_USER, BASIC_AUTH_PASS)
     
     return session
 

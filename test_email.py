@@ -52,8 +52,8 @@ def test_gmail_connection():
         return False
 
 def test_email_dry_run():
-    """Test email sending with dry run"""
-    print("\n📧 Testing Email Dry Run...")
+    """Test email sending with dry run AND send actual email"""
+    print("\n📧 Testing Email Send...")
     
     try:
         from config.user_config import user_config
@@ -64,7 +64,7 @@ def test_email_dry_run():
         
         # Create message
         msg = MIMEMultipart('alternative')
-        msg['Subject'] = gmail_config['subject_template']
+        msg['Subject'] = gmail_config['subject_template'].replace('{date}', 'Test')
         msg['From'] = gmail_config['sender_email']
         msg['To'] = ", ".join(gmail_config['to_emails'])
         
@@ -85,7 +85,17 @@ def test_email_dry_run():
         with open(preview_file, "w") as f:
             f.write(msg.as_string())
         
-        print("✅ Email dry run successful - check for draft_email.eml file")
+        print("✅ Email structure built - check for draft_email.eml file")
+        
+        # ACTUALLY SEND THE EMAIL
+        server = smtplib.SMTP('smtp.gmail.com', 587)
+        server.starttls()
+        server.login(gmail_config['sender_email'], gmail_config['app_password'])
+        server.send_message(msg)
+        server.quit()
+        
+        print("✅ Actual Email Sent!")
+        
         return True
             
     except Exception as e:

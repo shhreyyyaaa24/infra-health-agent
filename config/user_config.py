@@ -10,7 +10,7 @@ class UserConfig:
     
     def __init__(self):
         # Email Provider Configuration
-        self.EMAIL_PROVIDER = "outlook"  # Options: "outlook", "gmail"
+        self.EMAIL_PROVIDER = "gmail"  # Options: "outlook", "gmail"
         
         # Director Configuration
         self.DIRECTOR_CONFIG = {
@@ -27,7 +27,7 @@ class UserConfig:
         self.COOKIES_FILE = ""
         
         # Dashboard Configuration
-        self.DASHBOARD_BASE_URL = "http://127.0.0.1:63645/"
+        self.DASHBOARD_BASE_URL = "http://localhost:5173"
         self.DASHBOARD_TAB_URLS = {
             "gcp": f"{self.DASHBOARD_BASE_URL}/gcp-dashboard",
             "aws": f"{self.DASHBOARD_BASE_URL}/aws-dashboard", 
@@ -35,11 +35,13 @@ class UserConfig:
         }
         self.SCREENSHOT_HEADLESS = True
         self.SCREENSHOT_DIR = "screenshots"
-        self.SCREENSHOT_SELECTOR = "body"
+        self.SCREENSHOT_SELECTOR = ".cloud-card"  # Target specific component cards
         
         # Email Configuration Templates
         self.EMAIL_CONFIG = {
             "outlook": {
+                "sender_email": "your-outlook@outlook.com",
+                "app_password": os.getenv("OUTLOOK_APP_PASSWORD"),  # Get from environment variable
                 "to_emails": ["recipient@example.com"],
                 "cc_emails": ["cc@example.com"],
                 "subject_template": "Infrastructure Health Report - {date}"
@@ -54,7 +56,10 @@ class UserConfig:
         }
         
         # Scheduling Configuration
-        self.SEND_TIME = "09:00"  # 24-hour format
+        self.SEND_TIME = "09:00"  # 24-hour format (e.g., "14:30" for 2:30 PM)
+        
+        # Optional: Custom schedule day (default is Friday)
+        # self.SCHEDULE_DAY = "monday"  # Options: monday, tuesday, wednesday, thursday, friday, saturday, sunday
         
         # Environment Customization (optional - override defaults if needed)
         self.CUSTOM_ENVIRONMENTS = {

@@ -7,11 +7,18 @@ import sys
 import os
 from datetime import datetime
 
+# Load environment variables first
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass  # dotenv not available, will use existing env vars
+
 # Import our modules
 from data.fetcher import fetch_all_environment_data, get_summary_stats
 from data.screenshotter import take_screenshots, login_and_save_state
-from email.email_composer import build_html_email
-from email.mailer import send_email_with_attachments, preview_email_html
+from email_module.email_composer import build_html_email
+from email_module.mailer import send_email_with_attachments, preview_email_html
 from config import SEND_TIME
 from config.constants import DEFAULT_SCHEDULE_DAY
 
@@ -104,7 +111,7 @@ def run_once(dry_run=False):
         print("Dry run completed. No email sent.")
     else:
         print("Sending email...")
-        success = send_email_with_attachments(html_body, screenshot_paths)
+        success = send_email_with_attachments(html_body, screenshot_paths, all_data=all_data)
         if success:
             print("Process completed successfully!")
         else:

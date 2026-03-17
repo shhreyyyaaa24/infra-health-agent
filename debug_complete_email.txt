@@ -1,0 +1,31 @@
+Hi Shreya Tiwari,
+
+Status
+Here's the current infrastructure status as of 2026-03-18 04:22:04:
+
+Important Updates
+• ⚠️ Data Analytics Pipeline (GCP): CPU at 85% - Overbudget projection $250
+• ⚠️ ML Training Infrastructure (GCP): CPU at 95% - Overbudget projection $750
+• ⚠️ Batch Processing Jobs (AWS): CPU at 88% - Overbudget projection $450
+• ⚠️ Database Services (AZURE): CPU at 92% - Overbudget projection $1200
+
+Summary
+Total Projects: 7
+
+• Healthy: 3 projects
+• Medium Risk: 0 projects
+• Severe Risk: 4 projects
+
+Project Details
+Environment	Project Name	CPU Usage	CPU Budget	Shutdown Limit	Overbudget Projection	Status
+--------------------------------------------------------------------------------
+GCP	AI - Common Components	45%	100%	90%	$0	Healthy
+GCP	Data Analytics Pipeline	85%	100%	80%	$250	Severe
+GCP	ML Training Infrastructure	95%	100%	80%	$750	Severe
+AWS	EKS Production Cluster	30%	100%	90%	$0	Healthy
+AWS	Batch Processing Jobs	88%	100%	85%	$450	Severe
+AZURE	Web Apps Cluster	25%	100%	90%	$0	Healthy
+AZURE	Database Services	92%	100%	85%	$1200	Severe
+
+---
+This report was generated automatically by the Infrastructure Health Agent.

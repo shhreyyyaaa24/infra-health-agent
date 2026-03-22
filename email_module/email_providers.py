@@ -1,258 +1,169 @@
 """
-Email provider implementations for Gmail
+Email provider implementations (Outlook & Gmail via SMTP)
 """
 
 import os
+import base64
 import smtplib
+from abc import ABC, abstractmethod
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.image import MIMEImage
-from abc import ABC, abstractmethod
+from datetime import datetime
 
-# Load environment variables for email credentials
 try:
     from dotenv import load_dotenv
     load_dotenv()
 except ImportError:
-    pass  # dotenv not available, will use existing env vars
+    pass
 
 
 class EmailProvider(ABC):
-    """Abstract base class for email providers"""
+    """Abstract base class for SMTP email providers"""
+    
+    def __init__(self, config):
+        self.config = config
+        self.smtp_server = None
+        self.smtp_port = 587
+    
+    def _embed_images_base64(self, html_body, screenshot_paths):
+        """Embed images as base64 in HTML"""
+        if not screenshot_paths:
+            return html_body
+        
+        for path in screenshot_paths:
+            if os.path.exists(path):
+                with open(path, "rb") as f:
+                    b64_data = base64.b64encode(f.read()).decode()
+                html_body = html_body.replace(f'cid:{os.path.basename(path)}', f'data:image/png;base64,{b64_data}')
+        
+        return html_body
+    
+    def _build_message(self, html_body, subject, msg_type='alternative'):
+        """Build MIME message"""
+        msg = MIMEMultipart(msg_type)
+        msg['Subject'] = subject
+        msg['From'] = self.config['sender_email']
+        msg['To'] = ", ".join(self.config['to_emails'])
+        if self.config.get('cc_emails'):
+            msg['Cc'] = ", ".join(self.config['cc_emails'])
+        return msg
+    
+    def _send_via_smtp(self, msg):
+        """Send message via SMTP"""
+        server = smtplib.SMTP(self.smtp_server, self.smtp_port)
+        server.starttls()
+        server.login(self.config['sender_email'], self.config['app_password'])
+        all_recipients = self.config['to_emails'] + self.config.get('cc_emails', [])
+        server.send_message(msg, to_addrs=all_recipients)
+        server.quit()
+    
+    def _check_credentials(self):
+        """Validate email credentials"""
+        if not self.config.get('app_password'):
+            raise ValueError(f"{self.__class__.__name__} app password not configured. Set environment variable.")
     
     @abstractmethod
-    def send_email(self, html_body, screenshot_paths=None, dry_run=False):
-        """Send email with HTML body and optional attachments"""
+    def send_email(self, html_body, screenshot_paths=None, dry_run=False, all_data=None):
         pass
     
     @abstractmethod
     def preview_email(self, html_body, screenshot_paths=None):
-        """Preview email content"""
         pass
 
 
 class OutlookProvider(EmailProvider):
-    """Outlook email provider using Microsoft SMTP"""
+    """Outlook SMTP provider"""
     
     def __init__(self, config):
-        self.config = config
+        super().__init__(config)
         self.smtp_server = "smtp-mail.outlook.com"
-        self.smtp_port = 587
     
-    def generate_cid_for_image(self, image_path):
-        """Generate a content ID for an image file"""
-        filename = os.path.basename(image_path)
-        name_without_ext = os.path.splitext(filename)[0]
-        return f"{name_without_ext}@infrahealth.local"
-    
-    def embed_images_in_html(self, html_body, screenshot_paths):
-        """Embed images as base64 in HTML for Outlook"""
-        import base64
-        
-        if not screenshot_paths:
-            return html_body
-        
-        modified_html = html_body
-        
-        for screenshot_path in screenshot_paths:
-            if os.path.exists(screenshot_path):
-                with open(screenshot_path, "rb") as image_file:
-                    image_data = base64.b64encode(image_file.read()).decode('utf-8')
-                
-                cid = self.generate_cid_for_image(screenshot_path)
-                # Replace cid: references with base64 data URLs
-                modified_html = modified_html.replace(f'cid:{cid}', f'data:image/png;base64,{image_data}')
-        
-        return modified_html
-    
-    def send_email(self, html_body, screenshot_paths=None, dry_run=False):
-        """Send email via Outlook SMTP"""
+    def send_email(self, html_body, screenshot_paths=None, dry_run=False, all_data=None):
+        """Send via Outlook SMTP"""
         try:
-            # Check if credentials are available
-            if not self.config.get('app_password'):
-                raise ValueError("Outlook app password not configured. Set OUTLOOK_APP_PASSWORD environment variable.")
-            
-            # Create message
-            msg = MIMEMultipart('alternative')
-            msg['Subject'] = self.config['subject_template']
-            msg['From'] = self.config['sender_email']
-            msg['To'] = ", ".join(self.config['to_emails'])
-            
-            if self.config.get('cc_emails'):
-                msg['Cc'] = ", ".join(self.config['cc_emails'])
-            
-            # For Outlook, embed images as base64 in HTML
-            html_content = self.embed_images_in_html(html_body, screenshot_paths)
-            msg.attach(MIMEText(html_content, 'html'))
+            self._check_credentials()
+            msg = self._build_message(self._embed_images_base64(html_body, screenshot_paths), self.config['subject_template'])
+            msg.attach(MIMEText(msg.get_payload()[0] if msg.get_payload() else html_body, 'html'))
             
             if dry_run:
-                # Save as .eml file for preview
-                preview_file = "draft_outlook_email.eml"
-                with open(preview_file, "w") as f:
+                with open("draft_outlook_email.eml", "w") as f:
                     f.write(msg.as_string())
-                print(f"Dry run: Outlook email saved as draft: {preview_file}")
+                print(f"✓ Outlook email preview saved: draft_outlook_email.eml")
                 return True
-            else:
-                # Send via SMTP
-                server = smtplib.SMTP(self.smtp_server, self.smtp_port)
-                server.starttls()
-                server.login(self.config['sender_email'], self.config['app_password'])
-                
-                all_recipients = self.config['to_emails'] + self.config.get('cc_emails', [])
-                server.send_message(msg, to_addrs=all_recipients)
-                server.quit()
-                
-                print("Email sent successfully via Outlook!")
-                return True
-                
+            
+            self._send_via_smtp(msg)
+            print("✓ Email sent successfully via Outlook!")
+            return True
         except Exception as e:
-            print(f"Failed to send email via Outlook: {e}")
+            print(f"✗ Outlook send failed: {e}")
             return False
     
     def preview_email(self, html_body, screenshot_paths=None):
-        """Preview email HTML content"""
-        # Embed images for preview
-        html_content = self.embed_images_in_html(html_body, screenshot_paths)
-        
-        preview_file = "outlook_email_preview.html"
-        with open(preview_file, "w", encoding="utf-8") as f:
-            f.write(html_content)
-        
-        print(f"Outlook email preview saved to: {preview_file}")
-        print(f"Subject: {self.config['subject_template']}")
-        print(f"From: {self.config['sender_email']}")
-        print(f"To: {', '.join(self.config['to_emails'])}")
-        if self.config.get('cc_emails'):
-            print(f"CC: {', '.join(self.config['cc_emails'])}")
-        
-        return preview_file
+        """Preview Outlook email"""
+        msg = self._build_message(self._embed_images_base64(html_body, screenshot_paths), self.config['subject_template'])
+        with open("outlook_email_preview.html", "w", encoding="utf-8") as f:
+            f.write(msg.as_string())
+        print(f"✓ Preview saved to: outlook_email_preview.html")
+        return "outlook_email_preview.html"
 
 
 class GmailProvider(EmailProvider):
-    """Gmail email provider using SMTP"""
+    """Gmail SMTP provider"""
     
     def __init__(self, config):
-        self.config = config
+        super().__init__(config)
         self.smtp_server = "smtp.gmail.com"
-        self.smtp_port = 587
-    
-    def generate_cid_for_image(self, image_path):
-        """Generate a content ID for an image file"""
-        filename = os.path.basename(image_path)
-        name_without_ext = os.path.splitext(filename)[0]
-        return f"{name_without_ext}@infrahealth.local"
-    
-    def embed_images_in_html(self, html_body, screenshot_paths):
-        """Embed images as base64 in HTML for Gmail"""
-        import base64
-        
-        if not screenshot_paths:
-            return html_body
-        
-        modified_html = html_body
-        
-        for screenshot_path in screenshot_paths:
-            if os.path.exists(screenshot_path):
-                with open(screenshot_path, "rb") as image_file:
-                    image_data = base64.b64encode(image_file.read()).decode('utf-8')
-                
-                cid = self.generate_cid_for_image(screenshot_path)
-                # Replace cid: references with base64 data URLs
-                modified_html = modified_html.replace(f'cid:{cid}', f'data:image/png;base64,{image_data}')
-        
-        return modified_html
     
     def send_email(self, html_body, screenshot_paths=None, dry_run=False, all_data=None):
-        """Send email via Gmail SMTP"""
+        """Send via Gmail SMTP with attachments"""
         try:
-            # Check if credentials are available
-            if not self.config.get('app_password'):
-                raise ValueError("Gmail app password not configured. Set GMAIL_APP_PASSWORD environment variable.")
-            
-            # Create message
-            msg = MIMEMultipart('mixed')  # Use 'mixed' for attachments
-            
-            # Format subject with actual date
-            from datetime import datetime
+            self._check_credentials()
             date_str = datetime.now().strftime("%Y-%m-%d")
             subject = self.config['subject_template'].replace("{date}", date_str)
-            msg['Subject'] = subject
             
-            msg['From'] = self.config['sender_email']
-            msg['To'] = ", ".join(self.config['to_emails'])
+            msg = self._build_message(html_body, subject, 'mixed')
+            msg.attach(MIMEText(html_body, 'html'))
             
-            if self.config['cc_emails']:
-                msg['Cc'] = ", ".join(self.config['cc_emails'])
-            
-            # HTML version with colored table
-            html_content = html_body
-            msg.attach(MIMEText(html_content, 'html'))
-            
-            # Attach screenshots as separate attachments
+            # Attach screenshots
             if screenshot_paths:
-                for screenshot_path in screenshot_paths:
-                    if os.path.exists(screenshot_path):
-                        with open(screenshot_path, "rb") as image_file:
-                            img_data = image_file.read()
-                        
-                        img = MIMEImage(img_data)
-                        filename = os.path.basename(screenshot_path)
-                        img.add_header('Content-Disposition', f'attachment; filename="{filename}"')
+                for path in screenshot_paths:
+                    if os.path.exists(path):
+                        with open(path, "rb") as f:
+                            img = MIMEImage(f.read())
+                        img.add_header('Content-Disposition', f'attachment; filename="{os.path.basename(path)}"')
                         msg.attach(img)
-                        
-                        print(f"Attached screenshot: {filename}")
             
             if dry_run:
-                # Save as .eml file for preview
-                preview_file = "draft_email.eml"
-                with open(preview_file, "w") as f:
+                with open("draft_email.eml", "w") as f:
                     f.write(msg.as_string())
-                print(f"Dry run: Email saved as draft: {preview_file}")
+                print(f"✓ Gmail email preview saved: draft_email.eml")
                 return True
-            else:
-                # Send via SMTP
-                server = smtplib.SMTP(self.smtp_server, self.smtp_port)
-                server.starttls()
-                server.login(self.config['sender_email'], self.config['app_password'])
-                
-                all_recipients = self.config['to_emails'] + self.config.get('cc_emails', [])
-                server.send_message(msg, to_addrs=all_recipients)
-                server.quit()
-                
-                print("Email sent successfully via Gmail!")
-                return True
-                
+            
+            self._send_via_smtp(msg)
+            print("✓ Email sent successfully via Gmail!")
+            return True
         except Exception as e:
-            print(f"Failed to send email via Gmail: {e}")
+            print(f"✗ Gmail send failed: {e}")
             return False
     
     def preview_email(self, html_body, screenshot_paths=None):
-        """Preview email HTML content"""
-        # Embed images for preview
-        html_content = self.embed_images_in_html(html_body, screenshot_paths)
+        """Preview Gmail email"""
+        date_str = datetime.now().strftime("%Y-%m-%d")
+        subject = self.config['subject_template'].replace("{date}", date_str)
+        msg = self._build_message(html_body, subject, 'mixed')
         
-        preview_file = "email_preview.html"
-        with open(preview_file, "w", encoding="utf-8") as f:
-            f.write(html_content)
-        
-        print(f"Email preview saved to: {preview_file}")
-        print(f"Subject: {self.config['subject_template']}")
-        print(f"From: {self.config['sender_email']}")
-        print(f"To: {', '.join(self.config['to_emails'])}")
-        if self.config['cc_emails']:
-            print(f"CC: {', '.join(self.config['cc_emails'])}")
-        
-        return preview_file
+        with open("email_preview.html", "w", encoding="utf-8") as f:
+            f.write(html_body)
+        print(f"✓ Preview saved to: email_preview.html")
+        return "email_preview.html"
 
 
 def get_email_provider(provider_name, config):
-    """Factory function to get email provider instance"""
-    providers = {
-        "outlook": OutlookProvider,
-        "gmail": GmailProvider
-    }
+    """Get email provider instance"""
+    providers = {"outlook": OutlookProvider, "gmail": GmailProvider}
     
     if provider_name not in providers:
-        raise ValueError(f"Unsupported email provider: {provider_name}")
+        raise ValueError(f"Unsupported provider: {provider_name}")
     
     return providers[provider_name](config)

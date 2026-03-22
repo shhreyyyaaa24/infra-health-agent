@@ -3,17 +3,6 @@ name: Infrastructure Health Report
 on:
   # Manual trigger
   workflow_dispatch:
-    inputs:
-      environment:
-        description: 'Environment to check (gcp, aws, azure, or all)'
-        required: false
-        default: 'all'
-        type: choice
-        options:
-          - all
-          - gcp
-          - aws
-          - azure
   
   # Scheduled trigger (runs at 9:00 AM UTC daily)
   schedule:
@@ -47,10 +36,6 @@ jobs:
         env:
           # Gmail Configuration - Only sensitive data as secret
           GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
-          
-          # Environment filter from workflow input
-          ENVIRONMENT_FILTER: ${{ github.event.inputs.environment || 'all' }}
-          
         run: |
           echo "Starting Infrastructure Health Check..."
           python main.py

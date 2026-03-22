@@ -19,4 +19,3 @@ jobs:
         uses: ./.github/actions/send-infrastructure-email
         with:
           gmail-app-password: ${{ secrets.GMAIL_APP_PASSWORD }}
-          environment: ${{ inputs.environment }}

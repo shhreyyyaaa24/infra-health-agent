@@ -2,13 +2,9 @@ name: 'Send Infrastructure Health Email - Simple'
 description: 'Simple reusable workflow for sending infrastructure health emails'
 
 on:
+  workflow_dispatch:
+
   workflow_call:
-    inputs:
-      environment:
-        description: 'Environment to check'
-        required: false
-        default: 'all'
-        type: string
       
     secrets:
       GMAIL_APP_PASSWORD:

@@ -6,10 +6,6 @@ inputs:
   gmail-app-password:
     description: 'Gmail App Password for authentication (16-character code from Google)'
     required: true
-  environment:
-    description: 'Environment to check (all, gcp, aws, azure)'
-    required: false
-    default: 'all'
 
 outputs:
   email-sent:
@@ -48,7 +44,6 @@ runs:
       shell: bash
       env:
         GMAIL_APP_PASSWORD: ${{ inputs.gmail-app-password }}
-        ENVIRONMENT_FILTER: ${{ inputs.environment }}
       run: |
         echo "Sending Infrastructure Health Report..."
         python main.py --schedule

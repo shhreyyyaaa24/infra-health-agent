@@ -3,6 +3,12 @@ description: 'Simple reusable workflow for sending infrastructure health emails'
 
 on:
   workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Reason for manual trigger (optional)'
+        required: false
+        type: string
+        default: 'Manual health check'
 
   workflow_call:
       

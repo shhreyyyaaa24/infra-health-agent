@@ -19,12 +19,13 @@ from data.fetcher import fetch_all_environment_data, get_summary_stats
 from data.screenshotter import take_screenshots, login_and_save_state
 from email_module.email_composer import build_html_email
 from email_module.mailer import send_email_with_attachments, preview_email_html
-from config import SEND_TIME
+from config import SEND_TIME, SCHEDULE_DAY, EMAIL_CRON_SCHEDULE
 from config.constants import DEFAULT_SCHEDULE_DAY
 
 # Import AI Agent
 try:
     from ai_agent import InfrastructureHealthAgent
+    from ai_agent.custom_actions import CustomActionHandler
     AI_AGENT_AVAILABLE = True
 except ImportError:
     AI_AGENT_AVAILABLE = False
@@ -124,38 +125,45 @@ def run_once(dry_run=False):
 def run_scheduler():
     """Run the scheduler for periodic execution"""
     try:
-        from apscheduler.schedulers.blocking import BlockingScheduler
-        from apscheduler.triggers.cron import CronTrigger
+        import time
+        from ai_agent.custom_actions import CustomActionHandler
     except ImportError:
-        print("APScheduler not installed. Install with: pip install apscheduler")
+        print("APScheduler is required for scheduler mode. Install with: pip install apscheduler")
         return False
-    
-    # Parse send time
+
+    # Check if cron scheduling is enabled
+    if not EMAIL_CRON_SCHEDULE.get('enabled', True):
+        print("Email cron scheduling is disabled in config")
+        return False
+
+    # Get schedule configuration
+    schedule_day = EMAIL_CRON_SCHEDULE.get('day_of_week', SCHEDULE_DAY)
+    send_time = EMAIL_CRON_SCHEDULE.get('send_time', SEND_TIME)
+    timezone = EMAIL_CRON_SCHEDULE.get('timezone')
+
+    # Validate send_time format
     try:
-        hour, minute = map(int, SEND_TIME.split(':'))
+        hour, minute = map(int, send_time.split(':'))
     except ValueError:
-        print(f"Invalid SEND_TIME format: {SEND_TIME}. Use HH:MM format.")
+        print(f"Invalid send_time format: {send_time}. Use HH:MM format.")
         return False
-    
-    print(f"Starting scheduler - will run every Friday at {SEND_TIME}")
+
+    print(f"Starting scheduler - will run every {schedule_day} at {send_time}")
+    if timezone:
+        print(f"Timezone: {timezone}")
     print("Press Ctrl+C to stop the scheduler")
-    
-    scheduler = BlockingScheduler()
-    
-    # Schedule job for every Friday at specified time
-    scheduler.add_job(
-        run_once,
-        trigger=CronTrigger(day_of_week=DEFAULT_SCHEDULE_DAY, hour=hour, minute=minute),
-        id='weekly_health_check',
-        name='Weekly Infrastructure Health Check'
-    )
-    
+
+    handler = CustomActionHandler()
+    handler.schedule_report_cron(day_of_week=schedule_day, send_time=send_time, timezone=timezone)
+
     try:
-        scheduler.start()
+        while True:
+            time.sleep(1)
     except KeyboardInterrupt:
         print("\nScheduler stopped by user")
+        handler.stop_scheduler()
         return False
-    
+
     return True
 
 

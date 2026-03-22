@@ -16,15 +16,18 @@ class UserConfig:
         self.DIRECTOR_CONFIG = {
             "name": "Shreya Tiwari",  # Filter projects by this director name
             "email": "shhreyyyaa1@gmail.com",  # Director's email for notifications
-            "cc_emails": ["manager@example.com"],  # Additional CC emails
+            "cc_emails": [""],  # Additional CC emails
         }
         
         # API Configuration
         self.API_ENDPOINT = "https://your-api-server.com/api/projects"
-        self.USE_WINDOWS_AUTH = True
+        self.USE_WINDOWS_AUTH = False
         self.BASIC_AUTH_USER = ""
         self.BASIC_AUTH_PASS = ""
         self.COOKIES_FILE = ""
+        
+        # Custom Environments (optional - override/add to default environments)
+        self.CUSTOM_ENVIRONMENTS = {}  # Example: {"custom_env": {"display_name": "Custom", "api_key": "custom"}}
         
         # Dashboard Configuration
         self.DASHBOARD_BASE_URL = "http://localhost:5173"
@@ -37,18 +40,18 @@ class UserConfig:
         self.SCREENSHOT_DIR = "screenshots"
         self.SCREENSHOT_SELECTOR = ".cloud-card"  # Target specific component cards
         
-        # Email Configuration Templates
+        # Email Configuration Templates - only sensitive data from env var
         self.EMAIL_CONFIG = {
             "outlook": {
                 "sender_email": "your-outlook@outlook.com",
-                "app_password": os.getenv("OUTLOOK_APP_PASSWORD"),  # Get from environment variable
-                "to_emails": ["recipient@example.com"],
-                "cc_emails": ["cc@example.com"],
+                "app_password": os.getenv("OUTLOOK_APP_PASSWORD", ""),  # Get from environment variable
+                "to_emails": ["shhreyyyaa1@gmail.com"],
+                "cc_emails": [""],
                 "subject_template": "Infrastructure Health Report - {date}"
             },
             "gmail": {
                 "sender_email": "shreyaa.developer@gmail.com",
-                "app_password": os.getenv("GMAIL_APP_PASSWORD"),
+                "app_password": os.getenv("GMAIL_APP_PASSWORD", ""),  # Get from environment variable
                 "to_emails": ["shhreyyyaa1@gmail.com"],
                 "cc_emails": [""],
                 "subject_template": "Infrastructure Health Report - {date}"
@@ -56,19 +59,15 @@ class UserConfig:
         }
         
         # Scheduling Configuration
-        self.SEND_TIME = "09:00"  # 24-hour format (e.g., "14:30" for 2:30 PM)
+        self.SEND_TIME = "09:00"  # 24-hour format (HH:MM)
+        self.SCHEDULE_DAY = "fri"  # Day of week: "mon", "tue", "wed", "thu", "fri", "sat", "sun"
         
-        # Optional: Custom schedule day (default is Friday)
-        # self.SCHEDULE_DAY = "monday"  # Options: monday, tuesday, wednesday, thursday, friday, saturday, sunday
-        
-        # Environment Customization (optional - override defaults if needed)
-        self.CUSTOM_ENVIRONMENTS = {
-            # Add custom environment configurations here
-            # Example:
-            # "custom_env": {
-            #     "display_name": "Custom Environment",
-            #     "api_key": "custom"
-            # }
+        # Email Cron Schedule Configuration
+        self.EMAIL_CRON_SCHEDULE = {
+            "enabled": True,  # Enable/disable cron-based email scheduling
+            "day_of_week": self.SCHEDULE_DAY,  # Day of week for cron schedule
+            "send_time": self.SEND_TIME,  # Time to send (HH:MM in 24-hour format)
+            "timezone": None,  # Optional timezone (e.g., "US/Eastern", "UTC"). None = system default
         }
         
         # Additional Settings

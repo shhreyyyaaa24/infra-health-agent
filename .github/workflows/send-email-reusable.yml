@@ -1,0 +1,26 @@
+name: 'Send Infrastructure Health Email - Simple'
+description: 'Simple reusable workflow for sending infrastructure health emails'
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: 'Environment to check'
+        required: false
+        default: 'all'
+        type: string
+      
+    secrets:
+      GMAIL_APP_PASSWORD:
+        required: true
+        description: 'Gmail App Password (16-character code)'
+
+jobs:
+  send-report:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Infrastructure Health Email
+        uses: ./.github/actions/send-infrastructure-email
+        with:
+          gmail-app-password: ${{ secrets.GMAIL_APP_PASSWORD }}
+          environment: ${{ inputs.environment }}

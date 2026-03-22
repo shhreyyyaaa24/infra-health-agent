@@ -38,6 +38,10 @@ EMAIL_CONFIG = user_config.EMAIL_CONFIG
 
 # Scheduling
 SEND_TIME = user_config.SEND_TIME or DEFAULT_SEND_TIME
+SCHEDULE_DAY = user_config.SCHEDULE_DAY or DEFAULT_SCHEDULE_DAY
+
+# Email Cron Schedule Configuration
+EMAIL_CRON_SCHEDULE = user_config.EMAIL_CRON_SCHEDULE
 
 # Additional Settings
 DEBUG_MODE = user_config.DEBUG_MODE

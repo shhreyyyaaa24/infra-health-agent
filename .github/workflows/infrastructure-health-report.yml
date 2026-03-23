@@ -10,9 +10,9 @@ on:
         type: string
         default: 'Manual health check'
   
-  # Scheduled trigger (runs at 9:00 AM UTC daily)
+  # Scheduled trigger (runs at 1:55 PM UTC daily = 7:25 PM IST)
   schedule:
-    - cron: '0 9 * * *'
+    - cron: '55 13 * * *'
   
   # Trigger on push to main or feature branches
   push:
@@ -46,6 +46,10 @@ jobs:
         run: |
           echo "Starting Infrastructure Health Check..."
           python main.py
+          if [ $? -ne 0 ]; then
+            echo "❌ Failed to send infrastructure health report"
+            exit 1
+          fi
           
       - name: Upload screenshots as artifacts
         uses: actions/upload-artifact@v4

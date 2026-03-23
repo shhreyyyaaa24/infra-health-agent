@@ -46,8 +46,13 @@ runs:
         GMAIL_APP_PASSWORD: ${{ inputs.gmail-app-password }}
       run: |
         echo "Sending Infrastructure Health Report..."
-        python main.py --schedule
-        echo "email-sent=true" >> $GITHUB_OUTPUT
+        python main.py
+        if [ $? -eq 0 ]; then
+          echo "email-sent=true" >> $GITHUB_OUTPUT
+        else
+          echo "email-sent=false" >> $GITHUB_OUTPUT
+          exit 1
+        fi
         echo "screenshot-count=$(ls screenshots/ 2>/dev/null | wc -l)" >> $GITHUB_OUTPUT
     
     - name: Upload screenshots

@@ -21,6 +21,9 @@ jobs:
   send-report:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: Send Infrastructure Health Email
         uses: ./.github/actions/send-infrastructure-email
         with:

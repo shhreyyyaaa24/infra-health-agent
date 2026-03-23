@@ -66,6 +66,40 @@ def build_project_details_list(all_data):
     return html
 
 
+def add_screenshots_to_html(screenshot_paths=None):
+    """Add screenshots to HTML email as embedded base64 images"""
+    import base64
+    
+    if not screenshot_paths:
+        return '<p style="color: #666; font-style: italic;">No screenshots available.</p>'
+    
+    html = '<div style="margin: 20px 0;">'
+    
+    for screenshot_path in screenshot_paths:
+        if os.path.exists(screenshot_path):
+            try:
+                # Read image and encode as base64
+                with open(screenshot_path, 'rb') as f:
+                    img_data = base64.b64encode(f.read()).decode()
+                
+                # Get filename for display
+                filename = os.path.basename(screenshot_path)
+                
+                # Add image to HTML
+                html += f'''<div style="margin-bottom: 20px; border: 1px solid #ddd; padding: 10px; border-radius: 4px;">
+                    <p style="margin: 0 0 10px 0; font-weight: 600; color: #2c3e50;">{filename}</p>
+                    <img src="data:image/png;base64,{img_data}" style="max-width: 100%; height: auto; border-radius: 4px;"/>
+                </div>'''
+            except Exception as e:
+                print(f"Error embedding screenshot {screenshot_path}: {e}")
+                html += f'<p style="color: #dc3545;">Failed to embed screenshot: {filename}</p>'
+        else:
+            html += f'<p style="color: #ffc107;">Screenshot not found: {screenshot_path}</p>'
+    
+    html += '</div>'
+    return html
+
+
 def build_html_email(all_data, screenshot_paths=None):
     """Build complete HTML email body"""
     from config import DIRECTOR_CONFIG
@@ -114,6 +148,9 @@ def build_html_email(all_data, screenshot_paths=None):
     
     <h3 style="margin: 20px 0 10px 0; color: #2c3e50; font-size: 16px; font-weight: 600;">Project Details</h3>
     {build_project_details_list(all_data)}
+    
+    <h3 style="margin: 20px 0 10px 0; color: #2c3e50; font-size: 16px; font-weight: 600;">Dashboard Screenshots</h3>
+    {add_screenshots_to_html(screenshot_paths)}
     
     <hr>
     <p><small>This report was generated automatically by the Infrastructure Health Agent.</small></p>

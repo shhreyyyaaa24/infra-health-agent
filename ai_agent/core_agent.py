@@ -9,14 +9,15 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Any, Optional
 from dataclasses import dataclass
 
-from .decision_engine import DecisionEngine
-from .analyzer import DataAnalyzer
+from .decision import DecisionEngine
+from .analysis import DataAnalyzer
 from .learning import LearningSystem
+from .custom_actions import CustomActionHandler
 from config import DIRECTOR_CONFIG, EMAIL_CONFIG
 from data.fetcher import fetch_all_environment_data
 from data.screenshotter import take_screenshots
-from email.email_composer import build_html_email
-from email.mailer import send_email_with_attachments
+from email_module.email_composer import build_html_email
+from email_module.mailer import send_email_with_attachments
 
 
 @dataclass
@@ -214,9 +215,10 @@ class InfrastructureHealthAgent:
         # Build intelligent email content
         html_content = self._generate_intelligent_email_content()
         
-        # Send email
-        success = send_email_with_attachments(html_content, screenshots)
-        
+        # Send email via custom action handler (SMTP + cron support)
+        handler = CustomActionHandler()
+        success = handler.send_report_email(html_body=html_content, screenshot_paths=screenshots, all_data=self.last_analysis)
+
         action = AgentAction(
             action_type="intelligent_report",
             description=f"Sent AI-enhanced report with {len(screenshots)} screenshots",
@@ -228,7 +230,7 @@ class InfrastructureHealthAgent:
                 'content_type': 'ai_enhanced'
             }
         )
-        
+
         return action
     
     def _handle_immediate_actions(self, decision: AgentDecision) -> List[AgentAction]:

@@ -4,13 +4,13 @@ Transforms rule-based automation into intelligent decision-making system
 """
 
 from .core_agent import InfrastructureHealthAgent
-from .decision_engine import DecisionEngine
-from .analyzer import DataAnalyzer
+from .analysis import DataAnalyzer
+from .decision import DecisionEngine
 from .learning import LearningSystem
 
 __all__ = [
     'InfrastructureHealthAgent',
-    'DecisionEngine', 
     'DataAnalyzer',
+    'DecisionEngine',
     'LearningSystem'
 ]

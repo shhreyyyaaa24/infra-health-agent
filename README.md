@@ -1,202 +1,163 @@
 # Infrastructure Health Agent
 
-An automated infrastructure monitoring and reporting system that fetches data from REST APIs, captures dashboard screenshots, and sends HTML email reports with inline images via Outlook.
+An intelligent infrastructure monitoring system with AI-powered analysis, anomaly detection, and automated reporting. Fetches data from REST APIs, analyzes trends, and sends HTML email reports.
 
 ## Features
 
-- **API Data Fetching**: Retrieves project data from REST APIs with Windows/NTLM authentication
-- **Status Computation**: Calculates health status (HEALTHY/MEDIUM/SEVERE) based on CPU usage and budget projections
-- **Dashboard Screenshots**: Captures screenshots of multiple dashboard URLs using Playwright
-- **HTML Email Reports**: Generates color-coded HTML emails with inline image attachments
-- **Outlook Integration**: Sends emails via win32com Outlook with CID image references
-- **Scheduling**: Optional weekly scheduling using APScheduler
-- **Authentication Support**: Windows Kerberos/NTLM and basic auth fallback
+- **API Data Fetching**: REST API integration with configurable credentials
+- **AI-Powered Analysis**: Anomaly detection, trend analysis, and predictive insights
+- **Dashboard Screenshots**: Captures screenshots with Playwright
+- **HTML Email Reports**: Color-coded reports with inline screenshots
+- **Email Providers**: Gmail & Outlook SMTP support (configurable)
+- **Smart Scheduling**: Cron-based scheduling via configuration (no code edits)
+- **CI/CD Ready**: GitHub Actions workflow for automated daily reports
 
-## Installation
+## Quick Start
 
-1. Install Python dependencies:
+### Installation
+
 ```bash
+# Install dependencies
 pip install -r requirements.txt
-```
 
-2. Install Playwright Chromium:
-```bash
+# Install Playwright browser
 playwright install chromium
 ```
 
-3. Configure settings in `config.py`:
-   - Set your API endpoints and authentication details
-   - Configure dashboard URLs and email recipients
-   - Set the director name for filtering projects
+### Configuration
 
-## Usage
+Edit `config/user_config.py` to customize:
+- `EMAIL_PROVIDER`: "gmail" or "outlook"
+- `API_ENDPOINT`: Your API base URL
+- `DASHBOARD_TAB_URLS`: Dashboard URLs to capture
+- `EMAIL_CRON_SCHEDULE`: Scheduling options (day_of_week, send_time, timezone)
+- `DIRECTOR_CONFIG`: Email recipients and sender details
 
-### Initial Setup (One-time)
+### Usage
 
-Open browser for manual authentication and save session state:
 ```bash
-python main.py --login
-```
-
-### Run Once
-
-Execute immediately and send email:
-```bash
+# Run once and send email
 python main.py
-```
 
-### Dry Run (Preview Only)
+# Run with scheduler (uses EMAIL_CRON_SCHEDULE config)
+python main.py --schedule
 
-Build email and preview without sending:
-```bash
+# Dry run (preview email, no send)
 python main.py --dry-run
 ```
 
-### AI Agent Mode
+## AI Agent System
 
-Run the intelligent AI Agent for advanced monitoring and decision-making:
-```bash
-python main.py --ai-agent
-```
+The system includes intelligent analysis and decision-making:
 
-### Dry Run AI Agent
+- **Analysis Module** (`ai_agent/analysis/`): Anomaly detection, trend analysis, severity scoring
+- **Decision Module** (`ai_agent/decision/`): Alert evaluation, action recommendations, escalation logic
+- **Learning Module** (`ai_agent/learning/`): Pattern matching, issue prediction, historical analysis
 
-Preview AI Agent actions without sending emails:
-```bash
-python main.py --ai-agent --dry-run
-```
-
-### Scheduled Mode
-
-Run every Friday at the configured time:
-```bash
-python main.py --schedule
-```
-
-## AI Agent Capabilities
-
-The AI Agent transforms the rule-based automation into an intelligent system with:
-
-### 🧠 Intelligence Features
-- **Anomaly Detection**: Identifies unusual patterns in infrastructure metrics
-- **Trend Analysis**: Analyzes performance trends over time
-- **Predictive Insights**: Forecasts potential issues before they occur
-- **Pattern Recognition**: Learns from historical data to identify recurring issues
-- **Adaptive Decision Making**: Makes intelligent decisions based on context
-
-### 🤖 Decision Engine
-- **Severity Assessment**: Intelligently assesses alert severity
-- **Reporting Strategy**: Determines optimal reporting frequency and format
-- **Immediate Actions**: Recommends critical actions for urgent issues
-- **Escalation Logic**: Decides when to escalate to management
-
-### 📊 Enhanced Analysis
-- **Multi-factor Analysis**: Considers CPU, budget, and performance metrics
-- **Risk Assessment**: Evaluates overall infrastructure risk
-- **Cost Impact Analysis**: Estimates financial impact of issues
-- **Customer Impact Assessment**: Determines customer-facing impact
-
-### 🎯 Learning System
-- **Historical Learning**: Learns from past incidents and outcomes
-- **Pattern Storage**: Maintains knowledge base of infrastructure patterns
-- **Confidence Scoring**: Provides confidence levels for predictions
-- **Continuous Improvement**: Improves accuracy over time
-
-### 📧 AI-Enhanced Reporting
-- **Intelligent Insights**: Includes AI-generated insights in reports
-- **Anomaly Highlights**: Highlights detected anomalies
-- **Predictive Warnings**: Includes early warnings for potential issues
-- **Smart Recommendations**: Provides actionable recommendations
+All three modules are automatically invoked during report generation to provide intelligent insights and anomaly detection.
 
 ## Configuration
 
-The system uses a two-tier configuration approach organized in the `config/` package:
+Two-tier configuration system in `config/` package:
 
-### 1. System Constants (`config/constants.py`)
-- Contains system defaults that should not be modified
-- Includes status colors, default environments, timeouts, etc.
+### System Constants (`config/constants.py`)
+System defaults - do not modify.
 
-### 2. User Configuration (`config/user_config.py`)
-- **Email Provider**: `EMAIL_PROVIDER` - Choose "outlook" or "gmail"
-- **Director Config**: `DIRECTOR_CONFIG` - Set director name, email, and CC emails
-- **API Settings**: `API_ENDPOINT`, authentication credentials
-- **Dashboard URLs**: `DASHBOARD_TAB_URLS` for your dashboards
-- **Email Settings**: `EMAIL_CONFIG` dict with provider-specific settings
-- **Scheduling**: `SEND_TIME` (24-hour format, e.g., "09:00")
-- **Custom Environments**: Optional `CUSTOM_ENVIRONMENTS` to override defaults
+### User Settings (`config/user_config.py`)
+Customize these settings:
 
-Edit `config/user_config.py` to customize all settings for your environment.
+```python
+# Email
+EMAIL_PROVIDER = "gmail"  # or "outlook"
+DIRECTOR_CONFIG = {
+    "name": "John Doe",
+    "email": "john@example.com",
+    "cc_emails": ["manager@example.com"]
+}
 
-## Status Logic
+# API
+API_ENDPOINT = "https://api.example.com"
 
-- **HEALTHY**: `overbudgetProjection <= 0`
-- **MEDIUM**: `overbudgetProjection > 0` AND `cpu <= cpusShutdownLimit`
-- **SEVERE**: `overbudgetProjection > 0` AND `cpu > cpusShutdownLimit`
+# Dashboards
+DASHBOARD_TAB_URLS = {
+    "GCP": "http://localhost:5173/gcp-dashboard",
+    "AWS": "http://localhost:5173/aws-dashboard"
+}
 
-## File Structure
+# Scheduling (no code changes needed)
+EMAIL_CRON_SCHEDULE = {
+    "enabled": True,
+    "day_of_week": "fri",      # mon, tue, wed, thu, fri, sat, sun
+    "send_time": "09:00",      # 24-hour format
+    "timezone": None           # None = UTC
+}
+```
+
+Set email credentials via environment variables:
+- Gmail: `GMAIL_APP_PASSWORD`
+- Outlook: `OUTLOOK_APP_PASSWORD`
+
+## Project Structure
 
 ```
 infra-health-agent/
-├── main.py                    # CLI entry point
-├── requirements.txt           # Python dependencies
-├── README.md                 # This file
-├── config/                   # Configuration package
-│   ├── __init__.py          # Package initialization
-│   ├── constants.py         # System constants (do not modify)
-│   ├── user_config.py       # User configuration template (modify this)
-│   └── config.py            # Configuration loader
-├── data/                     # Data handling package
-│   ├── __init__.py          # Package initialization
-│   ├── fetcher.py           # API data fetching and processing
-│   └── screenshotter.py     # Playwright screenshot capture
-├── email/                    # Email package
-│   ├── __init__.py          # Package initialization
-│   ├── email_composer.py    # HTML email generation
-│   ├── email_providers.py   # Email provider implementations (Outlook/Gmail)
-│   └── mailer.py            # Generic email sending interface
-├── ai_agent/                 # 🤖 AI Agent package
-│   ├── __init__.py          # Package initialization
-│   ├── core_agent.py        # Main AI Agent class
-│   ├── decision_engine.py   # Intelligent decision-making engine
-│   ├── analyzer.py          # Data analysis and anomaly detection
-│   └── learning.py          # Learning system for pattern recognition
-└── utils/                    # Utilities package
-    └── __init__.py          # Package initialization (for future utilities)
-```
+├── main.py                  # CLI entry point
+├── requirements.txt         # Dependencies
+├── config/                  # Configuration package
+│   ├── constants.py        # System constants (read-only)
+│   ├── user_config.py      # User settings (edit this)
+│   └── config.py           # Configuration loader
+├── data/                    # Data handling
+│   ├── fetcher.py          # API data fetching
+│   └── screenshotter.py    # Playwright screenshots
+├── email_module/           # Email handling
+│   ├── email_composer.py   # HTML generation
+│   ├── email_providers.py  # Gmail/Outlook SMTP
+│   └── mailer.py           # Email interface
+├── ai_agent/               # AI Intelligence
+│   ├── core_agent.py       # Main AI Agent
+│   ├── custom_actions.py   # Email scheduling & cron
+│   ├── analysis/           # Data analysis
+│   │   ├── analyzer.py
+│   │   ├── anomaly_detector.py
+│   │   └── trend_analyzer.py
+│   ├── decision/           # Decision making
+│   │   ├── decision_engine.py
+│   │   ├── alert_evaluator.py
+│   │   └── action_recommender.py
+│   └── learning/           # Pattern learning
+│       ├── learning.py
+│       ├── pattern_matcher.py
+│       └── predictor.py
+└── utils/                   # Utilities
 
 ## Authentication
 
+### Email Providers
+
+**Gmail**: Requires App Password
+- Enable 2-factor authentication on Google Account
+- Generate App Password from account settings
+- Set `GMAIL_APP_PASSWORD` environment variable
+
+**Outlook**: Requires App Password
+- Set `OUTLOOK_APP_PASSWORD` environment variable
+
 ### API Authentication
 
-#### Primary (Windows)
-Uses `requests-negotiate-sspi` with current Windows Kerberos ticket - no password needed.
+Configure in `user_config.py`:
+- `API_ENDPOINT`: Base URL for your API
+- Credentials via environment variables or config
 
-#### Fallback (NTLM)
-Uses `requests-ntlm` with configured credentials when Windows auth fails.
+## GitHub Actions
 
-#### Basic Auth
-Set `USE_WINDOWS_AUTH = False` and provide `BASIC_AUTH_USER` and `BASIC_AUTH_PASS`.
+Automated daily reports via GitHub Actions:
 
-### Email Authentication
+1. Add GitHub secret: `GMAIL_APP_PASSWORD` (Settings → Secrets → Actions)
+2. Workflow runs daily at 9 AM UTC (configurable in workflow file)
+3. Supports manual trigger via workflow dispatch
 
-#### Outlook
-Uses Windows COM interface - requires Outlook to be installed and configured.
-
-#### Gmail
-Requires App Password for Gmail:
-1. Enable 2-factor authentication on your Google account
-2. Generate an App Password from Google Account settings
-3. Configure `EMAIL_CONFIG['gmail']['sender_email']` and `EMAIL_CONFIG['gmail']['app_password']`
-
-## Email Features
-
-- **Generic Provider System**: Choose between Outlook and Gmail via configuration
-- **HTML Email**: Color-coded project status table
-- **Inline Screenshots**: Dashboard images embedded in emails
-- **Provider-specific Handling**: 
-  - Outlook: Uses CID references with MAPI properties
-  - Gmail: Uses base64 embedded images
-- **Summary Statistics**: Environment grouping and status counts
+See `.github/workflows/infrastructure-health-report.yml` for setup details.
 
 ## Scheduling
 

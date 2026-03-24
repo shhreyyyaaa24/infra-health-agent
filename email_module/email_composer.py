@@ -67,32 +67,24 @@ def build_project_details_list(all_data):
 
 
 def add_screenshots_to_html(screenshot_paths=None):
-    """Add screenshots to HTML email as embedded base64 images"""
-    import base64
-    
+    """Add screenshots to HTML email using Content-ID references"""
     if not screenshot_paths:
         return '<p style="color: #666; font-style: italic;">No screenshots available.</p>'
     
     html = '<div style="margin: 20px 0;">'
     
-    for screenshot_path in screenshot_paths:
+    for i, screenshot_path in enumerate(screenshot_paths):
         if os.path.exists(screenshot_path):
-            try:
-                # Read image and encode as base64
-                with open(screenshot_path, 'rb') as f:
-                    img_data = base64.b64encode(f.read()).decode()
-                
-                # Get filename for display
-                filename = os.path.basename(screenshot_path)
-                
-                # Add image to HTML
-                html += f'''<div style="margin-bottom: 20px; border: 1px solid #ddd; padding: 10px; border-radius: 4px;">
-                    <p style="margin: 0 0 10px 0; font-weight: 600; color: #2c3e50;">{filename}</p>
-                    <img src="data:image/png;base64,{img_data}" style="max-width: 100%; height: auto; border-radius: 4px;"/>
-                </div>'''
-            except Exception as e:
-                print(f"Error embedding screenshot {screenshot_path}: {e}")
-                html += f'<p style="color: #dc3545;">Failed to embed screenshot: {filename}</p>'
+            # Get filename for display
+            filename = os.path.basename(screenshot_path)
+            # Use Content-ID for email-embedded images (referenced by provider)
+            content_id = f"screenshot_{i}"
+            
+            # Add image reference to HTML
+            html += f'''<div style="margin-bottom: 20px; border: 1px solid #ddd; padding: 10px; border-radius: 4px;">
+                <p style="margin: 0 0 10px 0; font-weight: 600; color: #2c3e50;">{filename}</p>
+                <img src="cid:{content_id}" style="max-width: 100%; height: auto; border-radius: 4px;"/>
+            </div>'''
         else:
             html += f'<p style="color: #ffc107;">Screenshot not found: {screenshot_path}</p>'
     

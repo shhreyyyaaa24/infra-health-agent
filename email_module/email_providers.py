@@ -122,16 +122,20 @@ class GmailProvider(EmailProvider):
             date_str = datetime.now().strftime("%Y-%m-%d")
             subject = self.config['subject_template'].replace("{date}", date_str)
             
-            msg = self._build_message(html_body, subject, 'mixed')
-            msg.attach(MIMEText(html_body, 'html'))
+            msg = self._build_message(html_body, subject, 'related')
+            msg_alternative = MIMEMultipart('alternative')
+            msg.attach(msg_alternative)
+            msg_alternative.attach(MIMEText(html_body, 'html'))
             
-            # Attach screenshots
+            # Attach screenshots with Content-ID for inline references
             if screenshot_paths:
-                for path in screenshot_paths:
+                for i, path in enumerate(screenshot_paths):
                     if os.path.exists(path):
                         with open(path, "rb") as f:
                             img = MIMEImage(f.read())
-                        img.add_header('Content-Disposition', f'attachment; filename="{os.path.basename(path)}"')
+                        # Set Content-ID so HTML can reference with cid:screenshot_N
+                        img.add_header('Content-ID', f'<screenshot_{i}>')
+                        img.add_header('Content-Disposition', 'inline', filename=os.path.basename(path))
                         msg.attach(img)
             
             if dry_run:

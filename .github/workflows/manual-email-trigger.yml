@@ -1,0 +1,83 @@
+name: Manual Email Trigger
+
+on:
+  workflow_dispatch:
+    inputs:
+      email_reason:
+        description: 'Reason for sending email (optional)'
+        required: false
+        type: string
+        default: 'Manual infrastructure health check'
+      dry_run:
+        description: 'Preview email without sending (dry run)'
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  send-manual-email:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      
+      - name: Install Playwright and system dependencies
+        run: |
+          playwright install chromium
+          playwright install-deps chromium
+      
+      - name: Display trigger info
+        run: |
+          echo "📧 Manual Email Trigger Activated"
+          echo "Reason: ${{ github.event.inputs.email_reason || 'No reason provided' }}"
+          echo "Dry Run: ${{ github.event.inputs.dry_run || 'false' }}"
+      
+      - name: Run Manual Email Send
+        env:
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+        run: |
+          if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
+            echo "🔍 Running in DRY RUN mode - will preview email only"
+            python main.py --dry-run
+          else
+            echo "📤 Sending email report..."
+            python main.py
+          fi
+          
+          if [ $? -ne 0 ]; then
+            echo "❌ Failed to send email"
+            exit 1
+          fi
+      
+      - name: Upload screenshots as artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: manual-email-screenshots-${{ github.run_number }}
+          path: screenshots/
+          retention-days: 7
+          
+      - name: Report Status
+        if: always()
+        run: |
+          if [ ${{ job.status }} == "success" ]; then
+            echo "✅ Manual email trigger completed successfully!"
+            if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
+              echo "📋 Email was previewed (dry run mode)"
+            else
+              echo "📧 Email was sent successfully"
+            fi
+          else
+            echo "❌ Manual email trigger failed"
+          fi

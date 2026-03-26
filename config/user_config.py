@@ -21,10 +21,6 @@ class UserConfig:
         
         # API Configuration
         self.API_ENDPOINT = "https://your-api-server.com/api/projects"
-        self.USE_WINDOWS_AUTH = False
-        self.BASIC_AUTH_USER = ""
-        self.BASIC_AUTH_PASS = ""
-        self.COOKIES_FILE = ""
         
         # Custom Environments (optional - override/add to default environments)
         self.CUSTOM_ENVIRONMENTS = {}  # Example: {"custom_env": {"display_name": "Custom", "api_key": "custom"}}

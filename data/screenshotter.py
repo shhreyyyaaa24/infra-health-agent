@@ -108,19 +108,36 @@ def take_screenshots(login_mode=False):
 
 
 def use_mock_screenshots():
-    """Use mock screenshots when dashboard is not available"""
-    mock_screenshots = []
-    environments = ["gcp", "aws", "azure"]
+    """Use existing screenshots from repo when live capture unavailable"""
+    existing_screenshots = []
     
-    for env in environments:
-        mock_path = f"{SCREENSHOT_DIR}/{env}_dashboard.png"
-        if os.path.exists(mock_path):
-            mock_screenshots.append(mock_path)
-            print(f"Using mock screenshot: {mock_path}")
+    # Try to find any existing screenshots in the directory
+    if os.path.exists(SCREENSHOT_DIR):
+        all_files = os.listdir(SCREENSHOT_DIR)
+        png_files = [f for f in all_files if f.endswith('.png')]
+        
+        if png_files:
+            # Prioritize component screenshots (more detailed), then fall back to dashboard screenshots
+            component_files = [f for f in png_files if 'component' in f]
+            if component_files:
+                existing_screenshots = [os.path.join(SCREENSHOT_DIR, f) for f in sorted(component_files)]
+                print(f"Using existing component screenshots: {len(existing_screenshots)} found")
+            else:
+                # No component screenshots, use dashboard screenshots
+                dashboard_files = [f for f in png_files if 'dashboard' in f]
+                if dashboard_files:
+                    existing_screenshots = [os.path.join(SCREENSHOT_DIR, f) for f in sorted(dashboard_files)]
+                    print(f"Using existing dashboard screenshots: {len(existing_screenshots)} found")
+                else:
+                    # Use all available PNG files
+                    existing_screenshots = [os.path.join(SCREENSHOT_DIR, f) for f in sorted(png_files)[:3]]
+                    print(f"Using available screenshots: {len(existing_screenshots)} found")
         else:
-            print(f"Mock screenshot not found: {mock_path}")
+            print("No screenshot files found in repository")
+    else:
+        print(f"Screenshot directory does not exist: {SCREENSHOT_DIR}")
     
-    return mock_screenshots
+    return existing_screenshots
 
 
 def login_and_save_state():

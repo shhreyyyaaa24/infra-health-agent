@@ -4,7 +4,7 @@ Screenshot module using Playwright for dashboard captures
 
 import os
 from playwright.sync_api import sync_playwright
-from config import DASHBOARD_TAB_URLS, SCREENSHOT_DIR, SCREENSHOT_SELECTOR, SCREENSHOT_HEADLESS
+from config import DASHBOARD_TAB_URLS, SCREENSHOT_DIR, SCREENSHOT_SELECTOR, SCREENSHOT_HEADLESS, DIRECTOR_CONFIG
 from config.constants import DEFAULT_LOGIN_WAIT_TIME, AUTH_STATE_FILE
 
 
@@ -71,12 +71,11 @@ def take_screenshots(login_mode=False):
                         print(f"Found {len(component_cards)} component cards on {env_name} dashboard")
                         
                         for i, card in enumerate(component_cards):
-                            # Check if this card belongs to the director
                             owner_element = card.query_selector(".owner")
                             if owner_element:
                                 owner_text = owner_element.text_content()
-                                if "Shreya Tiwari" in owner_text:
-                                    # Screenshot this specific card
+                                director_name = DIRECTOR_CONFIG["name"]
+                                if director_name in owner_text:
                                     screenshot_path = f"{SCREENSHOT_DIR}/{env_name}_shreya_component_{i+1}.png"
                                     card.screenshot(path=screenshot_path)
                                     screenshots_taken.append(screenshot_path)

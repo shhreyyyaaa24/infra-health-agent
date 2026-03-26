@@ -1,20 +1,31 @@
 # Infrastructure Health Agent
 
-An intelligent infrastructure monitoring system with AI-powered analysis, anomaly detection, and automated reporting. Fetches data from REST APIs, analyzes trends, and sends HTML email reports.
+An AI-powered infrastructure monitoring system that automates health checks, anomaly detection, and intelligent reporting. This comprehensive monitoring solution fetches real-time data from REST APIs, captures dashboard screenshots, analyzes trends with machine learning, and sends actionable HTML email reports with intelligent insights.
 
-## Features
+## What It Does
 
-- **API Data Fetching**: REST API integration with configurable credentials
-- **AI-Powered Analysis**: Anomaly detection, trend analysis, and predictive insights
-- **Dashboard Screenshots**: Captures screenshots with Playwright
-- **HTML Email Reports**: Color-coded reports with inline screenshots
-- **Email Providers**: Gmail & Outlook SMTP support (configurable)
-- **Smart Scheduling**: Cron-based scheduling via configuration (no code edits)
-- **CI/CD Ready**: GitHub Actions workflow for automated daily reports
+- **🔍 Continuous Monitoring**: Automatically polls infrastructure APIs to collect health metrics, status data, and performance indicators across multiple environments
+- **🤖 Intelligent Analysis**: Uses AI algorithms to detect anomalies, identify patterns, predict potential issues, and provide data-driven recommendations
+- **📊 Visual Documentation**: Captures timestamped screenshots of cloud dashboards (AWS, GCP, Azure) to provide visual context alongside numerical data
+- **📧 Automated Reporting**: Generates comprehensive HTML email reports with color-coded health status, inline screenshots, trend analysis, and actionable insights
+- **⚡ Proactive Alerts**: Identifies critical infrastructure issues before they impact users, with severity-based prioritization and escalation recommendations
+- **📈 Historical Tracking**: Maintains data history to analyze trends, compare performance over time, and improve prediction accuracy
+- **🔄 Multi-Environment Support**: Monitors across different cloud providers and environments from a unified interface
+- **⏰ Scheduled Automation**: Runs automatically on custom schedules without manual intervention, perfect for daily/weekly health reports
+
+## Key Features
+
+- **🤖 AI-Powered Analysis**: Intelligent anomaly detection, trend analysis, and predictive insights
+- **📊 Multi-Source Monitoring**: REST API integration with configurable authentication
+- **📸 Automated Screenshots**: Captures dashboard screenshots using Playwright
+- **📧 Smart Email Reports**: Color-coded HTML reports with inline screenshots and AI recommendations
+- **⏰ Flexible Scheduling**: Cron-based scheduling without code changes
+- **🔄 CI/CD Ready**: GitHub Actions workflow for automated daily reports
+- **🔧 Easy Configuration**: Single config file setup for all settings
 
 ## Quick Start
 
-### Installation
+### 1. Installation
 
 ```bash
 # Install dependencies
@@ -24,192 +35,147 @@ pip install -r requirements.txt
 playwright install chromium
 ```
 
-### Configuration
+### 2. Configuration
 
-Edit `config/user_config.py` to customize:
-- `EMAIL_PROVIDER`: "gmail" or "outlook"
-- `API_ENDPOINT`: Your API base URL
-- `DASHBOARD_TAB_URLS`: Dashboard URLs to capture
-- `EMAIL_CRON_SCHEDULE`: Scheduling options (day_of_week, send_time, timezone)
-- `DIRECTOR_CONFIG`: Email recipients and sender details
+Edit `config/user_config.py` - this is the **only file you need to modify**:
 
-### Usage
+```python
+# Email Provider
+EMAIL_PROVIDER = "gmail"  # or "outlook"
+
+# Director Info
+DIRECTOR_CONFIG = {
+    "name": "Your Name",
+    "email": "your@email.com",
+    "cc_emails": ["manager@email.com"]
+}
+
+# API Endpoint
+API_ENDPOINT = "https://your-api-server.com/api/projects"
+
+# Dashboard URLs
+DASHBOARD_TAB_URLS = {
+    "gcp": "http://localhost:5173/gcp-dashboard",
+    "aws": "http://localhost:5173/aws-dashboard"
+}
+
+# Scheduling (optional)
+EMAIL_CRON_SCHEDULE = {
+    "enabled": True,
+    "day_of_week": "fri",     # Day of week
+    "send_time": "09:00",     # 24-hour format
+    "timezone": None          # None = system default
+}
+```
+
+### 3. Set Email Credentials
+
+**Gmail**: Set `GMAIL_APP_PASSWORD` environment variable
+**Outlook**: Set `OUTLOOK_APP_PASSWORD` environment variable
+
+### 4. Run
 
 ```bash
 # Run once and send email
 python main.py
 
-# Run with scheduler (uses EMAIL_CRON_SCHEDULE config)
+# Run with AI Agent for intelligent analysis
+python main.py --ai-agent
+
+# Run with scheduler
 python main.py --schedule
 
-# Dry run (preview email, no send)
+# Preview email without sending
 python main.py --dry-run
 ```
 
 ## AI Agent System
 
-The system includes intelligent analysis and decision-making:
+The system includes three intelligent modules that work together:
 
-- **Analysis Module** (`ai_agent/analysis/`): Anomaly detection, trend analysis, severity scoring
-- **Decision Module** (`ai_agent/decision/`): Alert evaluation, action recommendations, escalation logic
-- **Learning Module** (`ai_agent/learning/`): Pattern matching, issue prediction, historical analysis
+- **🔍 Analysis Module**: Anomaly detection, trend analysis, and severity scoring
+- **🧠 Decision Module**: Alert evaluation, action recommendations, and escalation logic  
+- **📈 Learning Module**: Pattern matching, issue prediction, and historical analysis
 
-All three modules are automatically invoked during report generation to provide intelligent insights and anomaly detection.
+All modules are automatically invoked during report generation to provide intelligent insights and actionable recommendations.
 
-## Configuration
-
-Two-tier configuration system in `config/` package:
-
-### System Constants (`config/constants.py`)
-System defaults - do not modify.
-
-### User Settings (`config/user_config.py`)
-Customize these settings:
-
-```python
-# Email
-EMAIL_PROVIDER = "gmail"  # or "outlook"
-DIRECTOR_CONFIG = {
-    "name": "John Doe",
-    "email": "john@example.com",
-    "cc_emails": ["manager@example.com"]
-}
-
-# API
-API_ENDPOINT = "https://api.example.com"
-
-# Dashboards
-DASHBOARD_TAB_URLS = {
-    "GCP": "http://localhost:5173/gcp-dashboard",
-    "AWS": "http://localhost:5173/aws-dashboard"
-}
-
-# Scheduling (no code changes needed)
-EMAIL_CRON_SCHEDULE = {
-    "enabled": True,
-    "day_of_week": "fri",      # mon, tue, wed, thu, fri, sat, sun
-    "send_time": "09:00",      # 24-hour format
-    "timezone": None           # None = UTC
-}
-```
-
-Set email credentials via environment variables:
-- Gmail: `GMAIL_APP_PASSWORD`
-- Outlook: `OUTLOOK_APP_PASSWORD`
-
-## Project Structure
+## Project Architecture
 
 ```
 infra-health-agent/
-├── main.py                  # CLI entry point
-├── requirements.txt         # Dependencies
-├── config/                  # Configuration package
-│   ├── constants.py        # System constants (read-only)
-│   ├── user_config.py      # User settings (edit this)
-│   └── config.py           # Configuration loader
-├── data/                    # Data handling
-│   ├── fetcher.py          # API data fetching
-│   └── screenshotter.py    # Playwright screenshots
-├── email_module/           # Email handling
-│   ├── email_composer.py   # HTML generation
-│   ├── email_providers.py  # Gmail/Outlook SMTP
+├── main.py                    # CLI entry point with multiple modes
+├── config/                    # Configuration package
+│   ├── user_config.py        # ⭐ Main configuration file (edit this)
+│   ├── constants.py          # System defaults (read-only)
+│   └── config.py             # Configuration loader
+├── data/                     # Data handling
+│   ├── fetcher.py           # API data fetching
+│   └── screenshotter.py     # Playwright screenshots
+├── email_module/            # Email handling
+│   ├── email_composer.py    # HTML report generation
+│   ├── email_providers.py   # Gmail/Outlook SMTP
 │   └── mailer.py           # Email interface
 ├── ai_agent/               # AI Intelligence
-│   ├── core_agent.py       # Main AI Agent
-│   ├── custom_actions.py   # Email scheduling & cron
+│   ├── core_agent.py       # Main AI coordinator
+│   ├── custom_actions.py   # Scheduling & automation
 │   ├── analysis/           # Data analysis
-│   │   ├── analyzer.py
-│   │   ├── anomaly_detector.py
-│   │   └── trend_analyzer.py
 │   ├── decision/           # Decision making
-│   │   ├── decision_engine.py
-│   │   ├── alert_evaluator.py
-│   │   └── action_recommender.py
 │   └── learning/           # Pattern learning
-│       ├── learning.py
-│       ├── pattern_matcher.py
-│       └── predictor.py
-└── utils/                   # Utilities
+└── screenshots/            # Captured dashboard images
+```
 
-## Authentication
+## CLI Options
 
-### Email Providers
+```bash
+python main.py [OPTIONS]
 
-**Gmail**: Requires App Password
-- Enable 2-factor authentication on Google Account
-- Generate App Password from account settings
-- Set `GMAIL_APP_PASSWORD` environment variable
+Options:
+  --login          Open browser for manual authentication
+  --dry-run        Preview email without sending
+  --schedule       Run with cron scheduler
+  --ai-agent       Run AI Agent for intelligent monitoring
+```
 
-**Outlook**: Requires App Password
-- Set `OUTLOOK_APP_PASSWORD` environment variable
+## Authentication Setup
+
+### Gmail Setup
+1. Enable 2-factor authentication on your Google Account
+2. Generate an App Password from Google Account settings
+3. Set environment variable: `export GMAIL_APP_PASSWORD="your_app_password"`
+
+### Outlook Setup
+1. Set environment variable: `export OUTLOOK_APP_PASSWORD="your_app_password"`
 
 ### API Authentication
-
 Configure in `user_config.py`:
-- `API_ENDPOINT`: Base URL for your API
-- Credentials via environment variables or config
+- Basic Auth: Set `BASIC_AUTH_USER` and `BASIC_AUTH_PASS`
+- Windows Auth: Set `USE_WINDOWS_AUTH = True`
+- Custom: Modify authentication in `data/fetcher.py`
 
-## GitHub Actions
+## GitHub Actions Integration
 
-Automated daily reports via GitHub Actions:
+Automated reports via GitHub Actions:
 
-1. Add GitHub secret: `GMAIL_APP_PASSWORD` (Settings → Secrets → Actions)
-2. Workflow runs daily at 9 AM UTC (configurable in workflow file)
-3. Supports manual trigger via workflow dispatch
+1. **Add Secret**: `GMAIL_APP_PASSWORD` (Settings → Secrets → Actions)
+2. **Workflow**: Runs daily at 9 AM UTC (configurable)
+3. **Manual Trigger**: Supports manual workflow dispatch
 
-See `.github/workflows/infrastructure-health-report.yml` for setup details.
+See `.github/workflows/infrastructure-health-report.yml`
 
-## Scheduling
+## Important Notes
 
-When using `--schedule` flag:
-- Runs every Friday at `SEND_TIME` from config
-- Uses APScheduler CronTrigger
-- Only imports APScheduler when needed
-- Press Ctrl+C to stop scheduler
-
-## Troubleshooting
-
-1. **Authentication Issues**: Use `--login` flag to establish session manually
-2. **Screenshot Failures**: Check `DASHBOARD_TAB_URLS` and network connectivity
-3. **Email Issues**: Ensure Outlook is installed and configured
-4. **Permission Errors**: Verify write access to screenshot directory
-
-## Adapting to Your Use Case
-
-1. **Open `config/user_config.py`** - This is the only file you need to modify
-2. **Email Provider**: Set `EMAIL_PROVIDER` to "outlook" or "gmail"
-3. **Director Configuration**: Update `DIRECTOR_CONFIG` with name, email, and CC emails
-4. **API Settings**: Modify `API_ENDPOINT` and authentication credentials
-5. **Dashboard URLs**: Customize `DASHBOARD_TAB_URLS` for your dashboards
-6. **Email Configuration**: 
-   - For Gmail: Configure sender email and app password in `EMAIL_CONFIG['gmail']`
-   - For Outlook: Update recipient lists in `EMAIL_CONFIG['outlook']`
-7. **Custom Environments**: Add custom environments in `CUSTOM_ENVIRONMENTS` if needed
-8. **Scheduling**: Adjust `SEND_TIME` for your preferred schedule
-
-**Note**: Do not modify `config/constants.py` - it contains system defaults.
-
-## Package Structure Benefits
-
-- **Modular Design**: Each package has a specific responsibility
-- **Easy Maintenance**: Related functionality grouped together
-- **Scalable**: Easy to add new modules to appropriate packages
-- **Clean Imports**: Explicit imports make dependencies clear
-- **Testable**: Individual packages can be tested in isolation
+- **Single Config File**: Only edit `config/user_config.py` - never modify `constants.py`
+- **AI Dependencies**: AI Agent requires `numpy` and `scipy` (included in requirements.txt)
+- **Screenshot Directory**: Automatically created at `screenshots/`
+- **Scheduler**: Press Ctrl+C to stop the cron scheduler
+- **Debug Mode**: Enable `DEBUG_MODE = True` in config for verbose logging
 
 ## Dependencies
 
-- `requests` - HTTP client library
-- `requests-negotiate-sspi` - Windows authentication
-- `requests-ntlm` - NTLM authentication fallback
+Core dependencies:
+- `requests` - HTTP client for API calls
 - `playwright` - Browser automation for screenshots
-- `pywin32` - Windows COM interface for Outlook
-- `apscheduler` - Task scheduling (optional)
-- `numpy` - Numerical computing for AI analysis
-- `scipy` - Scientific computing for pattern recognition
-
-### AI Agent Requirements
-The AI Agent requires additional dependencies for intelligent analysis:
-```bash
-pip install numpy scipy
-```
+- `apscheduler` - Cron-based task scheduling
+- `anthropic` - AI integration
+- `python-dotenv` - Environment variable management
+- `numpy` & `scipy` - Numerical computing for AI analysis
